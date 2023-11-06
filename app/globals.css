@@ -13,5 +13,11 @@
 }
 
 body {
-  padding: 1rem;
+  padding: 0;
+}
+
+@layer base {
+  h1 {
+    @apply font-bold text-2xl mb-3;
+  }
 }
