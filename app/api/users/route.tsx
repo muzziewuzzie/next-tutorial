@@ -12,7 +12,6 @@ interface UserRequest {
 }
 
 export async function GET(request: NextRequest) {
-  // fetch users from db
   const users = await prisma.user.findMany();
   return NextResponse.json(users);
 }

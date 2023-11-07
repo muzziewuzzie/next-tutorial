@@ -14,8 +14,6 @@ interface UserRequest {
 }
 
 export async function GET(request: NextRequest, { params: { id } }: Props) {
-  // fetch data from db
-  // if data not found, return 404 error
   const user = await prisma.user.findUnique({
     where: { id: parseInt(id) },
   });
