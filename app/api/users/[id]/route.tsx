@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import schema from "../schema";
+import prisma from "@/prisma/client";
 
 interface Props {
   params: {
-    id: number;
+    id: string;
   };
 }
 
 interface UserRequest {
   name: string;
+  email: string;
 }
 
-export function GET(request: NextRequest, { params: { id } }: Props) {
+export async function GET(request: NextRequest, { params: { id } }: Props) {
   // fetch data from db
   // if data not found, return 404 error
-  if (id > 10)
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+  });
+  if (!user)
     return NextResponse.json({ error: "User not found" }, { status: 404 });
-  return NextResponse.json({ id: 1, name: "Mosh" });
+  return NextResponse.json(user);
 }
 
 export const PUT = async (request: NextRequest, { params: { id } }: Props) => {
@@ -24,16 +29,32 @@ export const PUT = async (request: NextRequest, { params: { id } }: Props) => {
   const validation = schema.safeParse(body);
   if (!validation.success)
     return NextResponse.json(validation.error.errors, { status: 400 });
-  if (id > 10)
+  const existingUser = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+  });
+  if (!existingUser)
     return NextResponse.json({ error: "User not found" }, { status: 404 });
-  return NextResponse.json({ id: 1, name: body.name }, { status: 200 });
+  const updatedUser = await prisma.user.update({
+    where: { id: existingUser.id },
+    data: {
+      name: body.name,
+      email: body.email,
+    },
+  });
+  return NextResponse.json(updatedUser, { status: 200 });
 };
 
 export const DELETE = async (
   request: NextRequest,
   { params: { id } }: Props
 ) => {
-  if (id > 10)
+  const existingUser = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+  });
+  if (!existingUser)
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  await prisma.user.delete({
+    where: { id: existingUser.id },
+  });
   return NextResponse.json({});
 };

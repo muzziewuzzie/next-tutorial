@@ -4,17 +4,17 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import schema from "./schema";
+import prisma from "@/prisma/client";
 
 interface UserRequest {
   name: string;
+  email: string;
 }
 
-export function GET(request: NextRequest) {
-  // fetch users from a db
-  return NextResponse.json([
-    { id: 1, name: "Muz" },
-    { id: 2, name: "John" },
-  ]);
+export async function GET(request: NextRequest) {
+  // fetch users from db
+  const users = await prisma.user.findMany();
+  return NextResponse.json(users);
 }
 
 export const POST = async (request: NextRequest) => {
@@ -22,5 +22,19 @@ export const POST = async (request: NextRequest) => {
   const validation = schema.safeParse(body);
   if (!validation.success)
     return NextResponse.json(validation.error.errors, { status: 400 });
-  return NextResponse.json({ id: 1, name: body.name }, { status: 201 });
+  const existingUser = await prisma.user.findUnique({
+    where: { email: body.email },
+  });
+  if (existingUser)
+    return NextResponse.json(
+      { error: "Email already exists." },
+      { status: 400 }
+    );
+  const newUser = await prisma.user.create({
+    data: {
+      name: body.name,
+      email: body.email,
+    },
+  });
+  return NextResponse.json(newUser, { status: 201 });
 };
